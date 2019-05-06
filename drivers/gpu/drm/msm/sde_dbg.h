@@ -433,7 +433,7 @@ static inline void sde_dbg_destroy(void)
 {
 }
 
-static inline void sde_dbg_dump(enum sde_dbg_dump_context mode,
+static inline void sde_dbg_dump(enum sde_dbg_dump_context mode ctx,
 	const char *name, ...)
 {
 }
