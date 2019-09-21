@@ -111,6 +111,18 @@ struct task_group;
 					 (task->flags & PF_FROZEN) == 0 && \
 					 (task->state & TASK_NOLOAD) == 0)
 
+/*
+ * Enum for display driver to provide varying refresh rates
+ */
+enum fps {
+	FPS0 = 0,
+	FPS30 = 30,
+	FPS48 = 48,
+	FPS60 = 60,
+	FPS90 = 90,
+	FPS120 = 120,
+};
+
 #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
 
 /*
@@ -556,6 +568,7 @@ extern void sched_update_cpu_freq_min_max(const cpumask_t *cpus, u32 fmin,
 					  u32 fmax);
 extern int sched_set_boost(int enable);
 extern void free_task_load_ptrs(struct task_struct *p);
+extern void sched_set_refresh_rate(enum fps fps);
 
 extern bool sched_prefer_idle_on_input;
 static inline void sched_set_prefer_idle(bool enable)
@@ -563,7 +576,7 @@ static inline void sched_set_prefer_idle(bool enable)
 	sched_prefer_idle_on_input = enable;
 }
 
-#define RAVG_HIST_SIZE_MAX  5
+#define RAVG_HIST_SIZE_MAX 5
 #define NUM_BUSY_BUCKETS 10
 
 /* ravg represents frequency scaled cpu-demand of tasks */
@@ -607,11 +620,12 @@ struct ravg {
 	u32 sum_history[RAVG_HIST_SIZE_MAX];
 	u32 *curr_window_cpu, *prev_window_cpu;
 	u32 curr_window, prev_window;
-	u16 active_windows;
 	u32 pred_demand;
 	u8 busy_buckets[NUM_BUSY_BUCKETS];
 	u16 demand_scaled;
 	u16 pred_demand_scaled;
+	u64 active_time;
+	u64 last_win_size;
 };
 #else
 static inline void sched_exit(struct task_struct *p) { }
@@ -631,6 +645,8 @@ static inline void free_task_load_ptrs(struct task_struct *p) { }
 
 static inline void sched_update_cpu_freq_min_max(const cpumask_t *cpus,
 					u32 fmin, u32 fmax) { }
+
+static inline void sched_set_refresh_rate(enum fps fps) { }
 #endif /* CONFIG_SCHED_WALT */
 
 struct sched_rt_entity {
@@ -803,6 +819,7 @@ struct task_struct {
 	struct list_head grp_list;
 	u64 cpu_cycles;
 	bool misfit;
+	u32 unfilter;
 #endif
 
 #ifdef CONFIG_CGROUP_SCHED
