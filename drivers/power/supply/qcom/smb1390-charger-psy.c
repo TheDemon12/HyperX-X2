@@ -1069,6 +1069,7 @@ static int smb1390_get_fastcharge_mode(struct smb1390 *chip)
 
 #define VFLOAT_FOR_TAPER_THR_MIN		4400000
 #define VFLOAT_FOR_FCC_THR				4450000
+
 static void smb1390_status_change_work(struct work_struct *work)
 {
 	struct smb1390 *chip = container_of(work, struct smb1390,
