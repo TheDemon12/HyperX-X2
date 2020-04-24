@@ -3862,7 +3862,6 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 			goto error;
 	}
 
-
 	rc = dsi_panel_parse_misc_features(panel);
 	if (rc)
 		pr_err("failed to parse misc features, rc=%d\n", rc);

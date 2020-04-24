@@ -21,6 +21,9 @@
 #include "cam_irq_controller.h"
 #include <uapi/media/cam_isp.h>
 
+/* Maximum length of tag while dumping */
+#define CAM_ISP_HW_DUMP_TAG_MAX_LEN 32
+
 /*
  * struct cam_isp_timestamp:
  *
@@ -105,6 +108,8 @@ enum cam_isp_hw_cmd_type {
 	CAM_ISP_HW_CMD_CSID_CLOCK_UPDATE,
 	CAM_ISP_HW_CMD_FE_UPDATE_IN_RD,
 	CAM_ISP_HW_CMD_FE_UPDATE_BUS_RD,
+	CAM_ISP_HW_CMD_DUMP_HW,
+	CAM_ISP_HW_CMD_SET_STATS_DMI_DUMP,
 	CAM_ISP_HW_CMD_MAX,
 };
 
@@ -246,5 +251,40 @@ struct cam_isp_hw_dual_isp_update_args {
 	enum cam_isp_hw_split_id         split_id;
 	struct cam_isp_resource_node    *res;
 	struct cam_isp_dual_config      *dual_cfg;
+};
+
+/*
+ * struct cam_isp_hw_dump_args:
+ *
+ * @Brief:        isp hw dump args
+ *
+ * @ req_id:         request id
+ * @ cpu_addr:       cpu address
+ * @ buf_len:        buf len
+ * @ offset:         offset of buffer
+ * @ ctxt_to_hw_map: ctx to hw map
+ */
+struct cam_isp_hw_dump_args {
+	uint64_t                req_id;
+	uintptr_t               cpu_addr;
+	size_t                  buf_len;
+	uint32_t                offset;
+	void                    *ctxt_to_hw_map;
+};
+
+/**
+ * struct cam_isp_hw_dump_header - ISP context dump header
+ *
+ * @Brief:        isp hw dump header
+ *
+ * @tag:       Tag name for the header
+ * @word_size: Size of word
+ * @size:      Size of data
+ *
+ */
+struct cam_isp_hw_dump_header {
+	char      tag[CAM_ISP_HW_DUMP_TAG_MAX_LEN];
+	uint64_t  size;
+	uint32_t  word_size;
 };
 #endif /* _CAM_ISP_HW_H_ */
