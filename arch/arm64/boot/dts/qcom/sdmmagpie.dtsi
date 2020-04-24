@@ -548,22 +548,22 @@
 		pil_modem_mem: modem_region@8b000000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0 0x8b000000 0 0x8400000>;
+			reg = <0 0x8b000000 0 0x7e00000>;
 		};
 
-		pil_video_mem: pil_video_region@93400000 {
+		pil_video_mem: pil_video_region@92e00000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0 0x93400000 0 0x500000>;
+			reg = <0 0x92e00000 0 0x500000>;
 		};
 
-		pil_cdsp_mem: cdsp_regions@93900000 {
+		pil_cdsp_mem: cdsp_regions@93300000 {
 			compatible = "removed-dma-pool";
 			no-map;
-			reg = <0 0x93900000 0 0x1e00000>;
+			reg = <0 0x93300000 0 0x1e00000>;
 		};
 
-		pil_adsp_mem: pil_adsp_region@95700000 {
+		pil_adsp_mem: pil_adsp_region@95100000 {
 			compatible = "removed-dma-pool";
 			no-map;
 			reg = <0 0x95100000 0 0x2600000>;
