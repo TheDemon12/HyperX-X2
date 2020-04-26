@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  * Copyright (C) 2020 XiaoMi, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -69,8 +69,15 @@ void hdd_nud_flush_work(struct hdd_adapter *adapter)
 
 void hdd_nud_deinit_tracking(struct hdd_adapter *adapter)
 {
-	hdd_debug("DeInitialize the NUD tracking");
-	qdf_destroy_work(NULL, &adapter->nud_tracking.nud_event_work);
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (adapter->device_mode == QDF_STA_MODE &&
+	    hdd_ctx->config->enable_nud_tracking) {
+		hdd_debug("DeInitialize the NUD tracking");
+		qdf_destroy_work(NULL, &adapter->nud_tracking.nud_event_work);
+	}
 }
 
 void hdd_nud_ignore_tracking(struct hdd_adapter *adapter, bool ignoring)
@@ -278,7 +285,8 @@ static void __hdd_nud_failure_work(void *data)
 	hdd_debug("Disconnecting STA with session id: %d",
 		  adapter->session_id);
 	/* Issue Disconnect */
-	status = wlan_hdd_disconnect(adapter, eCSR_DISCONNECT_REASON_DEAUTH);
+	status = wlan_hdd_disconnect(adapter, eCSR_DISCONNECT_REASON_DEAUTH,
+				     eSIR_MAC_GATEWAY_REACHABILITY_FAILURE);
 	if (0 != status) {
 		hdd_err("wlan_hdd_disconnect failed, status: %d", status);
 		hdd_set_disconnect_status(adapter, false);
