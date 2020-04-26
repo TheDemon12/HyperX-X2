@@ -290,8 +290,6 @@ static int cam_ife_hw_mgr_start_hw_res(
 			continue;
 		hw_intf = isp_hw_res->hw_res[i]->hw_intf;
 		if (hw_intf->hw_ops.start) {
-			isp_hw_res->hw_res[i]->rdi_only_ctx =
-				ctx->is_rdi_only_context;
 			rc = hw_intf->hw_ops.start(hw_intf->hw_priv,
 				isp_hw_res->hw_res[i],
 				sizeof(struct cam_isp_resource_node));
@@ -2501,13 +2499,18 @@ static int cam_ife_mgr_config_hw(void *hw_mgr_priv,
 		for (i = 0 ; i < cfg->num_hw_update_entries; i++) {
 			cmd = (cfg->hw_update_entries + i);
 			CAM_DBG(CAM_ISP, "reapply:%d cmd flags:%d",
-			cfg->reapply, cmd->flags);
+				cfg->reapply, cmd->flags);
 
-			if (cfg->reapply && (cmd->flags == DMI_BL ||
-						cmd->flags == CMD_BL)) {
+			if (cfg->reapply &&
+				(cmd->flags == CAM_ISP_IQ_BL)) {
 				skip++;
 				continue;
 			}
+
+			if (cmd->flags == CAM_ISP_UNUSED_BL ||
+				cmd->flags >= CAM_ISP_BL_MAX)
+				CAM_ERR(CAM_ISP, "Unexpected BL type %d",
+					cmd->flags);
 
 			cdm_cmd->cmd[i - skip].bl_addr.mem_handle = cmd->handle;
 			cdm_cmd->cmd[i - skip].offset = cmd->offset;
@@ -2515,7 +2518,7 @@ static int cam_ife_mgr_config_hw(void *hw_mgr_priv,
 		}
 		cdm_cmd->cmd_arrary_count = cfg->num_hw_update_entries - skip;
 		CAM_DBG(CAM_ISP, "updated cmd array count:%d skip value:%d",
-		cdm_cmd->cmd_arrary_count, skip);
+			cdm_cmd->cmd_arrary_count, skip);
 
 		if (cfg->init_packet)
 			init_completion(&ctx->config_done_complete);
@@ -2939,6 +2942,7 @@ static int cam_ife_mgr_start_hw(void *hw_mgr_priv, void *start_hw_args)
 	uint32_t                          i, j, camif_debug;
 	uint32_t                          enable_dmi_dump;
 	struct cam_isp_hw_get_cmd_update  cmd_update;
+	bool                              res_rdi_context_set = false;
 
 	if (!hw_mgr_priv || !start_isp) {
 		CAM_ERR(CAM_ISP, "Invalid arguments");
@@ -3081,6 +3085,21 @@ start_only:
 		ctx->ctx_index);
 	/* Start the IFE mux in devices */
 	list_for_each_entry(hw_mgr_res, &ctx->res_list_ife_src, list) {
+		switch (hw_mgr_res->res_id) {
+		case CAM_ISP_HW_VFE_IN_RDI0:
+		case CAM_ISP_HW_VFE_IN_RDI1:
+		case CAM_ISP_HW_VFE_IN_RDI2:
+		case CAM_ISP_HW_VFE_IN_RDI3:
+			if (!res_rdi_context_set) {
+				hw_mgr_res->hw_res[0]->rdi_only_ctx =
+					ctx->is_rdi_only_context;
+				res_rdi_context_set = true;
+			}
+			break;
+		default:
+			break;
+		}
+
 		rc = cam_ife_hw_mgr_start_hw_res(hw_mgr_res, ctx);
 		if (rc) {
 			CAM_ERR(CAM_ISP, "Can not start IFE MUX (%d)",
