@@ -33,7 +33,6 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
-#include "wlan_objmgr_peer_obj.h"
 #include "wlan_utility.h"
 
 /* NLA policy */
@@ -192,17 +191,6 @@ static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
 	return cb_obj.ndi_start(iface_name, transaction_id);
 }
 
-static void os_if_nan_vdev_delete_peer(struct wlan_objmgr_psoc *psoc,
-				       void *peer, void *nan_vdev)
-{
-	/* if peer belongs to nan vdev */
-	if (nan_vdev == wlan_peer_get_vdev(peer)) {
-		cfg80211_debug("deleting peer: %pM",
-			       wlan_peer_get_macaddr(peer));
-		wlan_objmgr_peer_obj_delete(peer);
-	}
-}
-
 static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 					struct nlattr **tb)
 {
@@ -236,12 +224,6 @@ static int os_if_nan_process_ndi_delete(struct wlan_objmgr_psoc *psoc,
 		nla_get_u16(tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]);
 	vdev_id = wlan_vdev_get_id(nan_vdev);
 	num_peers = ucfg_nan_get_active_peers(nan_vdev);
-
-	/* delete all peer for this interface first */
-	wlan_objmgr_iterate_obj_list(psoc, WLAN_PEER_OP,
-				     os_if_nan_vdev_delete_peer,
-				     nan_vdev, 1, WLAN_NAN_ID);
-
 	/*
 	 * wlan_util_get_vdev_by_ifname increments ref count
 	 * decrement here since vdev returned by that api is not used any more
@@ -1246,6 +1228,10 @@ os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 			ucfg_nan_get_active_ndp_sessions(vdev, idx);
 		ucfg_nan_set_active_ndp_sessions(vdev, active_sessions + 1,
 						 idx);
+		ucfg_nan_set_active_ndp_cnt(psoc, active_sessions + 1);
+		cb_obj.wlan_hdd_indicate_active_ndp_cnt(psoc,
+							wlan_vdev_get_id(vdev),
+							active_sessions + 1);
 	}
 
 	ifname = wlan_util_vdev_get_if_name(vdev);
@@ -1457,7 +1443,7 @@ static void os_if_ndp_end_ind_handler(struct wlan_objmgr_vdev *vdev,
 			struct nan_datapath_end_indication_event *end_ind)
 {
 	QDF_STATUS status;
-	uint32_t data_len, i;
+	uint32_t data_len, i, total_active_session = 0;
 	struct nan_callbacks cb_obj;
 	uint32_t *ndp_instance_array;
 	struct sk_buff *vendor_event;
@@ -1508,8 +1494,15 @@ static void os_if_ndp_end_ind_handler(struct wlan_objmgr_vdev *vdev,
 		ucfg_nan_set_active_ndp_sessions(vdev_itr,
 				end_ind->ndp_map[i].num_active_ndp_sessions,
 				idx);
+		total_active_session +=
+			end_ind->ndp_map[i].num_active_ndp_sessions;
 		wlan_objmgr_vdev_release_ref(vdev_itr, WLAN_NAN_ID);
 	}
+
+	ucfg_nan_set_active_ndp_cnt(psoc, total_active_session);
+	cb_obj.wlan_hdd_indicate_active_ndp_cnt(psoc,
+						wlan_vdev_get_id(vdev),
+						total_active_session);
 
 	data_len = osif_ndp_get_ndp_end_ind_len(end_ind);
 	vendor_event = cfg80211_vendor_event_alloc(os_priv->wiphy, NULL,

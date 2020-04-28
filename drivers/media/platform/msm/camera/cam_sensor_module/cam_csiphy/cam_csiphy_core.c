@@ -563,6 +563,10 @@ void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 
 	if (csiphy_dev->is_acquired_dev_mipi_switch == 1)
 		csiphy_dev->is_acquired_dev_mipi_switch = 0;
+	/* reset csiphy info */
+	csiphy_dev->csiphy_info.lane_mask = 0;
+	csiphy_dev->csiphy_info.lane_cnt = 0;
+	csiphy_dev->csiphy_info.combo_mode = 0;
 }
 
 static int32_t cam_csiphy_external_cmd(struct csiphy_device *csiphy_dev,

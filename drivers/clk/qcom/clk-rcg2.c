@@ -317,7 +317,6 @@ clk_rcg2_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 		rcg->current_freq = recalc_rate;
 
 	return recalc_rate;
-
 }
 
 static int _freq_tbl_determine_rate(struct clk_hw *hw, const struct freq_tbl *f,

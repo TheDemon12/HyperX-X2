@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -34,6 +34,8 @@
 #define REMOTE_TIME_REMAINDER_US(x) (REMOTE_TICKS_TO_US((x)) % \
 					(REMOTE_TICKS_TO_SEC((x)) * 1000000ULL))
 
+#define MHI_MAX_SFR_LEN (256)
+
 extern const char * const mhi_ee_str[MHI_EE_MAX];
 #define TO_MHI_EXEC_STR(ee) (ee >= MHI_EE_MAX ? "INVALID_EE" : mhi_ee_str[ee])
 
@@ -53,13 +55,12 @@ struct mhi_dev {
 	int resn;
 	void *arch_info;
 	bool powered_on;
+	bool allow_m1;
+	bool mdm_state;
 	dma_addr_t iova_start;
 	dma_addr_t iova_stop;
 	enum mhi_suspend_mode suspend_mode;
 
-	/* if set, soc support dynamic bw scaling */
-	void (*bw_scale)(struct mhi_controller *mhi_cntrl,
-			 struct mhi_dev *mhi_dev);
 	unsigned int lpm_disable_depth;
 	/* lock to toggle low power modes */
 	spinlock_t lpm_lock;
@@ -68,9 +69,11 @@ struct mhi_dev {
 void mhi_deinit_pci_dev(struct mhi_controller *mhi_cntrl);
 int mhi_pci_probe(struct pci_dev *pci_dev,
 		  const struct pci_device_id *device_id);
+void mhi_reg_write_work(struct work_struct *w);
 
 #ifdef CONFIG_ARCH_QCOM
 
+void mhi_arch_mission_mode_enter(struct mhi_controller *mhi_cntrl);
 int mhi_arch_power_up(struct mhi_controller *mhi_cntrl);
 int mhi_arch_pcie_init(struct mhi_controller *mhi_cntrl);
 void mhi_arch_pcie_deinit(struct mhi_controller *mhi_cntrl);
@@ -116,6 +119,10 @@ static inline int mhi_arch_link_resume(struct mhi_controller *mhi_cntrl)
 static inline int mhi_arch_power_up(struct mhi_controller *mhi_cntrl)
 {
 	return 0;
+}
+
+static inline void mhi_arch_mission_mode_enter(struct mhi_controller *mhi_cntrl)
+{
 }
 
 #endif
