@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0
+
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 	dtbo-$(CONFIG_ARCH_SDMMAGPIE) += \
 		phoenix-sdmmagpie-overlay.dtbo \
