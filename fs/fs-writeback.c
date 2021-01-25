@@ -1406,7 +1406,6 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 		dirty |= I_DIRTY_TIME;
 		trace_writeback_lazytime(inode);
 	}
-
 	inode->i_state &= ~dirty;
 
 	/*
