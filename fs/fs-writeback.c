@@ -1398,7 +1398,7 @@ __writeback_single_inode(struct inode *inode, struct writeback_control *wbc)
 	if ((inode->i_state & I_DIRTY_TIME) &&
 	     wbc->sync_mode == WB_SYNC_ALL || wbc->for_sync ||
 	     time_after(jiffies, inode->dirtied_time_when +
-			dirtytime_expire_interval * HZ))) {
+			dirtytime_expire_interval * HZ)) {
 		trace_writeback_lazytime(inode);
 		mark_inode_dirty_sync(inode);
 	}
