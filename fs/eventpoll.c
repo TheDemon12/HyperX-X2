@@ -1400,8 +1400,7 @@ static int ep_create_wakeup_source(struct epitem *epi)
 	}
 
 	name = epi->ffd.file->f_path.dentry->d_name.name;
-	ws = wakeup_source_register(name);
-
+	ws = wakeup_source_register(NULL, name);
 	if (!ws)
 		return -ENOMEM;
 	rcu_assign_pointer(epi->ws, ws);
