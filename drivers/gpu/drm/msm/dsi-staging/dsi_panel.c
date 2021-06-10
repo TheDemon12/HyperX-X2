@@ -2768,6 +2768,9 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 	panel->bl_config.samsung_prepare_hbm_flag = utils->read_bool(utils->data,
 									"qcom,samsung-prepare-hbm");
 
+	panel->bl_config.bl_inverted_dbv = utils->read_bool(utils->data,
+		"qcom,mdss-dsi-bl-inverted-dbv");
+
 	if (panel->bl_config.type == DSI_BACKLIGHT_PWM) {
 		rc = dsi_panel_parse_bl_pwm_config(panel);
 		if (rc) {
